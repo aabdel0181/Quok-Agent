@@ -3,6 +3,7 @@ import sys
 import json
 import random
 from datetime import datetime
+import re
 
 # Add parent directory to Python path
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -13,6 +14,36 @@ from hyperbolic_langchain.utils import HyperbolicAgentkitWrapper
 import asyncio
 from dotenv import load_dotenv
 
+def parse_gpu_response(raw_response: str) -> dict:
+    # parse the string into a dictionary
+    gpus = []
+    
+    # split the string into individual GPU entries
+    gpu_entries = raw_response.split("----------------------------------------")
+    
+    for entry in gpu_entries:
+        if not entry.strip():
+            continue
+            
+        # get info  using regex
+        cluster_match = re.search(r"Cluster: (.+)", entry)
+        node_match = re.search(r"Node ID: (.+)", entry)
+        model_match = re.search(r"GPU Model: (.+)", entry)
+        available_match = re.search(r"Available GPUs: (\d+)/(\d+)", entry)
+        price_match = re.search(r"Price: \$(\d+\.\d+)/hour", entry)
+        
+        if all([cluster_match, node_match, model_match, available_match, price_match]):
+            gpus.append({
+                "cluster_name": cluster_match.group(1).strip(),
+                "node_name": node_match.group(1).strip(),
+                "gpu_model": model_match.group(1).strip(),
+                "available_count": int(available_match.group(1)),
+                "total_count": int(available_match.group(2)),
+                "price_per_hour": float(price_match.group(1))
+            })
+    
+    return {"gpus": gpus}
+
 class ReliabilityTester:
     def __init__(self, toolkit):
         self.toolkit = toolkit
@@ -22,28 +53,40 @@ class ReliabilityTester:
     async def run_single_test(self):
         try:
             print("\n1. Getting available GPUs...")
-            # Debug: Print the actual tool
-            gpu_tool = self.tools.get("get_available_gpus")
-            print(f"GPU Tool: {gpu_tool}")
-            
-            # Debug: Print raw response
             raw_response = await self.tools["get_available_gpus"].arun("")
-            print(f"Raw Response: {raw_response}")
+            # print(f"Raw Response: {raw_response}")
             
-            # Only try to parse if we got a response
-            if raw_response:
-                gpus = json.loads(raw_response)
-                print(f"Found GPUs: {json.dumps(gpus, indent=2)}")
-            else:
-                print("No response from get_available_gpus tool")
+            # Parse the formatted response into JSON
+            gpus_data = parse_gpu_response(raw_response)
+            print(f"\nParsed GPU Data: {json.dumps(gpus_data, indent=2)}")
+            
+            if not gpus_data["gpus"]:
+                print("No GPUs available!")
                 return
                 
-        except KeyError as e:
-            print(f"Tool not found error: {e}")
-            print(f"Available tools: {list(self.tools.keys())}")
-        except json.JSONDecodeError as e:
-            print(f"JSON parsing error: {e}")
-            print(f"Raw response was: {raw_response}")
+            print("\n2. Selecting a GPU...")
+            # Filter for available GPUs and sort by price
+            available_gpus = [
+                gpu for gpu in gpus_data["gpus"] 
+                if gpu["available_count"] > 0
+            ]
+            
+            if not available_gpus:
+                print("No GPUs currently available!")
+                return
+                
+            # Select cheapest GPU for testing
+            selected_gpu = min(available_gpus, key=lambda x: x["price_per_hour"])
+            print(f"Selected GPU: {json.dumps(selected_gpu, indent=2)}")
+            
+            print("\n3. Attempting to rent GPU...")
+            rent_response = await self.tools["rent_compute"].arun({
+                "cluster_name": selected_gpu["cluster_name"],
+                "node_name": selected_gpu["node_name"],
+                "gpu_count": "1"
+            })
+            print(f"Rent Response: {rent_response}")
+            
         except Exception as e:
             print(f"Error during testing: {e}")
             print(f"Error type: {type(e)}")
@@ -57,12 +100,6 @@ async def main():
         hyperbolic_agentkit = HyperbolicAgentkitWrapper()
         hyperbolic_toolkit = HyperbolicToolkit.from_hyperbolic_agentkit_wrapper(hyperbolic_agentkit)
         
-        # Print available tools
-        print("\nAvailable tools:")
-        tools = hyperbolic_toolkit.get_tools()
-        for tool in tools:
-            print(f"- {tool.name}: {type(tool)}")
-            
         # Create and run tester
         tester = ReliabilityTester(hyperbolic_toolkit)
         print("\nStarting benchmark test...")
@@ -70,21 +107,10 @@ async def main():
             
     except Exception as e:
         print(f"Error running reliability agent: {e}")
-        print(f"Error type: {type(e)}")
 
 if __name__ == "__main__":
     # Load environment variables
     load_dotenv()
-    
-    # Debug: Print environment variables (without the actual API key value)
-    env_vars = {
-        "HYPERBOLIC_API_KEY": "✓" if os.getenv("HYPERBOLIC_API_KEY") else "✗",
-        "SSH_PRIVATE_KEY_PATH": os.getenv("SSH_PRIVATE_KEY_PATH"),
-        "PYTHONPATH": os.getenv("PYTHONPATH")
-    }
-    print("Environment variables:")
-    for key, value in env_vars.items():
-        print(f"{key}: {value}")
     
     # Run the agent
     asyncio.run(main())
