@@ -1,3 +1,4 @@
+# Script to get familiar with the hyperbolictoolkit (as a script, not yet an agent)
 import os
 import sys
 import json
@@ -52,11 +53,11 @@ class ReliabilityTester:
         
     async def run_single_test(self):
         try:
+            
             print("\n1. Getting available GPUs...")
             raw_response = await self.tools["get_available_gpus"].arun("")
-            # print(f"Raw Response: {raw_response}")
             
-            # Parse the formatted response into JSON
+            # Parse the string response into a json
             gpus_data = parse_gpu_response(raw_response)
             print(f"\nParsed GPU Data: {json.dumps(gpus_data, indent=2)}")
             
@@ -86,7 +87,38 @@ class ReliabilityTester:
                 "gpu_count": "1"
             })
             print(f"Rent Response: {rent_response}")
+                        
+            print("\n4. Waiting for instance to start...")
+            await asyncio.sleep(15)  # Give instance time to start
             
+            print("\n5. Getting instance status...")
+            status_response = await self.tools["get_gpu_status"].arun("")
+            
+            instance_status = status_response
+                
+            print(f"Instance Status: {json.dumps(instance_status, indent=2)}")
+            
+            # Check if we have any instances
+            if not instance_status.get('instances'):
+                print("No instances found in status response")
+                return
+                
+            # Find our most recently starte instance 
+            current_instance = sorted(
+                instance_status['instances'],
+                key=lambda x: x['start'],
+                reverse=True
+            )[0]
+            
+            print(f"\nFound instance: {current_instance['id']}")
+            self.current_gpu = current_instance
+            
+            # Check instance status
+            if current_instance['instance']['status'] == 'starting':
+                print("Instance is still starting, waiting longer...")
+                await asyncio.sleep(30)
+                
+                    
         except Exception as e:
             print(f"Error during testing: {e}")
             print(f"Error type: {type(e)}")
