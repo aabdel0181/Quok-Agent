@@ -23,6 +23,8 @@ class ReliabilityAgent:
         # self.results: List[BenchmarkResult] = []
         self.results = []
         self.current_gpu = None
+        self.conversation_log = []  # added this to store conversation history
+
         # self.gpu_selector = GPUSelector()
     
         # initialize claude 
@@ -116,6 +118,8 @@ class ReliabilityAgent:
 
             print_system(f"\nStarted benchmark at: {datetime.now().strftime('%H:%M:%S')}")
 
+            self.start_time = datetime.now() # get the start of the agent's interaction
+
             async for chunk in self.agent_executor.astream(
                 {"messages": [HumanMessage(content=prompt)]},
                 runnable_config
@@ -123,8 +127,12 @@ class ReliabilityAgent:
                 if "agent" in chunk:
                     response = chunk["agent"]["messages"][0].content
                     print_ai(format_ai_message_content(response))
+                    self.conversation_log.append({"role": "assistant", "content": response})
                 elif "tools" in chunk:
-                    print_system(chunk["tools"]["messages"][0].content)
+                    system_msg = chunk["tools"]["messages"][0].content
+                    print_system(system_msg)
+                    self.conversation_log.append({"role": "system", "content": system_msg})
+
                 print_system("-------------------")
 
         except KeyboardInterrupt:
@@ -132,11 +140,32 @@ class ReliabilityAgent:
             await self._cleanup()
         except Exception as e:
             print_error(f"Error during benchmark: {str(e)}")
-            await self._cleanup()
-                    
+            await self._cleanup()                   
         finally:
             await self._cleanup()
 
+    def save_conversation(self, log_dir="conversation_logs"):
+        """Save the conversation log to a file."""
+        if not self.conversation_log:
+            return
+            
+        # Create logs directory if it doesn't exist
+        os.makedirs(log_dir, exist_ok=True)
+        
+        # Generate filename with timestamp
+        timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
+        filename = f"{log_dir}/benchmark_conversation_{timestamp}.json"
+        
+        # Save conversation to file
+        with open(filename, "w") as f:
+            json.dump({
+                "start_time": self.start_time.isoformat(),
+                "end_time": datetime.now().isoformat(),
+                "conversation": self.conversation_log
+            }, f, indent=2)
+            
+        print_system(f"\nConversation log saved to: {filename}")
+        
     async def _run_performance_tests(self) -> Dict[str, Any]:
         """Run intelligent performance benchmarks."""
         try:
