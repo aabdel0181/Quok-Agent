@@ -99,7 +99,8 @@ class ReliabilityAgent:
         try:
             self.logger.start_benchmark()
             prompt = """Run a complete GPU benchmark cycle:
-            1. Get list of available GPUs and select the best one
+            0. First check, if we already have a GPU instance running
+            1. If not, get a list of available GPUs and select the cheapest one
             2. Set up the environment with required dependencies
             3. Run performance tests
             4. Clean up resources when done

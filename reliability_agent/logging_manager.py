@@ -120,7 +120,7 @@ class ConversationLogger:
             return
 
         # Analyze the conversation before saving
-        await self.analyze_conversation()
+        # await self.analyze_conversation()
 
         timestamp = self.start_time.strftime("%Y%m%d_%H%M%S")
         status_dir = os.path.join(self.base_log_dir, self.status.value.lower())
