@@ -20,7 +20,7 @@ async def manage_agent(toolkit):
     try:
         yield agent
     finally:
-        agent.save_conversation()
+        agent.logger.save_conversation()
 
 async def main():
     # Initialize components
