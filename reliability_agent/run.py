@@ -28,7 +28,7 @@ async def main():
     
     # Print results
     for result in agent.results:
-        print(json.dumps(result.dict(), indent=2))
+        print(json.dumps(result, indent=2))
 
 if __name__ == "__main__":
     load_dotenv()
