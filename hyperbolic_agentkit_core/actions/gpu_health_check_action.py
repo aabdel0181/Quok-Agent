@@ -54,28 +54,25 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
     def repo_exists() -> bool:
         """Check if the repository exists in the current directory via SSH."""
         result = execute_remote_command(f"ls | grep {repo_name}")
-        execute_remote_command(f"cd {repo_name}")
-        output = execute_remote_command("ls")
-        print(f"Inside the repo contents: {output}")
-
-        return bool(result.strip())
-
-
+        if result.strip():
+            output = execute_remote_command(f"cd {repo_name} && ls")
+            print(f"Inside the repo contents: {output}")
+            return True
+        return False
     def clone_repo():
         """Clone the repository if it does not exist via SSH."""
         print(f"Repository '{repo_name}' not found. Cloning from {repo_url}...")
         execute_remote_command(f"git clone {repo_url}")
-        execute_remote_command(f"cd {repo_name}")
-        output = execute_remote_command("ls")
+        output = execute_remote_command(f"cd {repo_name} && ls")
         print(f"Cloned repository contents: {output}")
 
 
     def run_gpu_health_check():
         """Run the GPU health check script and return results as a dictionary."""
-        permission_check = f"chmod +x {gpu_check_script}"
+        permission_check = f"cd {repo_name} && chmod +x {gpu_check_script}"
         permission_check_output = execute_remote_command(permission_check)
 
-        command = f"bash {gpu_check_script}"
+        command = f"cd {repo_name} && bash {gpu_check_script}"
         output = execute_remote_command(command)
 
         print("Raw GPU Health Check Output:")
@@ -86,6 +83,7 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
             return {"error": "GPU health check script produced no output"}
         
         return parse_health_check_output(output)
+
 
     def parse_health_check_output(output: str):
         """Parses GPU health check output into a structured dictionary."""
