@@ -23,8 +23,6 @@ class ReliabilityAgent:
         self.tools = {tool.name: tool for tool in self.toolkit.get_tools()}
         self.results = []
         self.current_gpu = None
-        self.logger = ConversationLogger()
-
         # self.gpu_selector = GPUSelector()
     
         # initialize claude 
@@ -33,7 +31,8 @@ class ReliabilityAgent:
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
             temperature=0
         )
-        
+        self.logger = ConversationLogger(llm=self.llm) # now we pass the LLM instance; I wonder if it'll work ;P 
+
         # create REACT agent with correct initialization
         system_message = """You are an AI agent specialized in decentralized GPU reliability assessments and benchmarking.
         You have access to tools for managing GPU instances and running commands.
@@ -73,8 +72,9 @@ class ReliabilityAgent:
             3. Install and validate each dependency
             4. Return the results in JSON format
 
-            Use the available tools to execute commands and verify the setup.
-            """
+            Return the results in JSON format.
+            For any long-running operations like installations, please split them into smaller commands and check progress."""
+
             
             response = await self.agent_executor.ainvoke(
                 {"messages": [HumanMessage(content=prompt)]},
@@ -133,14 +133,17 @@ class ReliabilityAgent:
                     self.logger.log_message("system", system_msg)
 
                 print_system("-------------------")
-            self.logger.set_status(BenchmarkStatus.SUCCESS)
+            await self.logger.save_conversation()
+
 
         except KeyboardInterrupt:
             self.logger.set_status(BenchmarkStatus.INTERRUPTED, "User interrupted the benchmark")
+            await self.logger.save_conversation()
             print_system("\nBenchmark interrupted...")
             await self._cleanup()
         except Exception as e:
             self.logger.set_status(BenchmarkStatus.ERROR, f"{type(e).__name__}: {str(e)}")
+            await self.logger.save_conversation()
             print_error(f"Error during benchmark: {str(e)}")
             await self._cleanup()                   
         finally:
