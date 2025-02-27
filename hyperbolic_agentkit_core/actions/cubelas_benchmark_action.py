@@ -80,8 +80,8 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
             
             # Parse the raw output into structured data
             benchmark_data = {
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-                "gpu_uuid": get_gpu_uuid(),
+                "Timestamp": int(datetime.datetime.utcnow().timestamp()),
+                "GPU_UUID": get_gpu_uuid(),
                 "raw_output": result,
                 "parsed_results": parse_benchmark_output(result)
             }
@@ -92,9 +92,10 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
             print(f"Error running CUBLAS benchmark: {e}")
             return {
                 "error": str(e),
-                "timestamp": datetime.datetime.utcnow().isoformat(),
-                "gpu_uuid": get_gpu_uuid()
+                "Timestamp": int(datetime.datetime.utcnow().timestamp()),
+                "GPU_UUID": get_gpu_uuid()
             }
+
 
     def get_gpu_uuid() -> str:
         """Retrieve GPU UUID from the system."""
