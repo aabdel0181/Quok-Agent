@@ -26,7 +26,7 @@ Important notes:
 - The action will read the readme to understand how to install base dependencies and run the gpu_health.sh script
 - The health check script will analyze the GPU’s temperature, memory usage, power draw, and other key metrics.
 - The action will classify the GPU as either 'flagged' (if there are concerns) or 'healthy' (if there are no major issues).
-- The health data will be stored in a JSON file for tracking and future analysis.
+- The health data will be stored in the GPUHealthChecks DynamoDB table using the dynamodb_inserter tool. 
 """
 
 class GPUHealthCheckInput(BaseModel):
@@ -77,7 +77,7 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         """Clone the repository if it does not exist via SSH."""
         print(f"Repository '{repo_name}' not found. Cloning from {repo_url}...")
         execute_remote_command(f"git clone {repo_url}")
-        output = execute_remote_command(f"cd {repo_name} && chmod +x gpu_health.sh")
+        output = execute_remote_command(f"cd {repo_name} && sudo chmod +x gpu_health.sh")
         print(f"Cloned repository contents: {output}")
 
     def install_dependencies():
@@ -90,9 +90,16 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         print("Running GPU health check...")
         try:
             # Execute the health check script
-            result = execute_remote_command(f"cd {repo_name} && cd {"scripts"} && ./gpu_health.sh")
+            
+             # First, change to the scripts directory and update permissions on the script
+            chmod_command = f"cd {repo_name}/scripts && chmod +x gpu_health.sh"
+            chmod_output = execute_remote_command(chmod_command)
+            print("chmod output:", chmod_output)
+            
+            # Then, run the script using sudo
+            run_command = f"cd {repo_name}/scripts && sudo ./gpu_health.sh"
+            result = execute_remote_command(run_command)
             print("result: ", result)
-            # Parse the JSON output
             health_data = json.loads(result)
             
             # Add timestamp and determine if flagged
@@ -115,27 +122,6 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         """Retrieve GPU UUID from the system."""
         uuid_output = execute_remote_command("nvidia-smi --query-gpu=uuid --format=csv,noheader")
         return uuid_output.strip().split('\n')[0] if uuid_output else "unknown_gpu"
-
-    # def parse_health_check_output(output: str):
-    #     """Parses GPU health check output into a structured dictionary."""
-    #     gpu_data = {"concerns": [], "fine": [], "flagged": False}
-    #     capturing_section = None
-
-    #     for line in output.split("\n"):
-    #         line = line.strip()
-    #         if "Concerns detected" in line:
-    #             capturing_section = "concerns"
-    #         elif "Fine status" in line:
-    #             capturing_section = "fine"
-    #         elif "--------------------------" in line:
-    #             capturing_section = None
-    #         elif capturing_section:
-    #             gpu_data[capturing_section].append(line)
-        
-    #     gpu_data["flagged"] = bool(gpu_data["concerns"])
-    #     gpu_data["uuid"] = get_gpu_uuid()
-    #     gpu_data["timestamp"] = datetime.datetime.utcnow().isoformat()
-    #     return gpu_data
 
     def store_data(health_data: dict):
         """Store GPU health data in the specified location."""
