@@ -11,8 +11,8 @@ from dotenv import load_dotenv
 
 class BenchmarkRunner:
     def __init__(self, 
-                 min_interval_minutes=1, 
-                 max_interval_minutes=3,
+                 min_interval_minutes=0.5, 
+                 max_interval_minutes=1.5,
                  log_dir="benchmark_logs"):
         self.min_interval = timedelta(minutes=min_interval_minutes)
         self.max_interval = timedelta(minutes=max_interval_minutes)
