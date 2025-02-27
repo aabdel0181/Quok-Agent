@@ -104,7 +104,7 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
             execute_remote_command(f"cd {repo_name}/benchmarks/cublas && sudo ./run.sh")
             
             # Read the results file
-            result = execute_remote_command(f"cat {repo_name}/results/cudnn_raw.txt")
+            result = execute_remote_command(f"cat {repo_name}/results/cublas_raw.txt")
             
             # Parse the raw output into structured data
             benchmark_data = {
