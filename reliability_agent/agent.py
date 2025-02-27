@@ -106,7 +106,7 @@ class ReliabilityAgent:
             3. Set up the environment with required dependencies
             4. Run the health check by calling the 'gpu_health_check' tool (this will take care of repository management)
             5. Use the 'dynamodb_insert' tool to store the health check results (DO NOT SKIP THIS)
-            6. Run the benchmarking tests (IGNORE THIS FOR NOW!!!)
+            6. Run the benchmarking tests (ONLY RUN USING THE 'cublas_benchmark' TOOL NOW)
             7. Clean up resources when done
             NOTE: You should never need to pull a repository outside of a tool call
             Return the results in JSON format.
