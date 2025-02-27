@@ -101,14 +101,14 @@ class ReliabilityAgent:
             self.logger.start_benchmark()
             prompt = """Run a complete GPU benchmark cycle:
             0. First check, if we already have a GPU instance running
-            1. If not, get a list of available GPUs and select a RANDOM one
+            1. If not, get a list of available GPUs and select a RANDOM GPU (even within a cluster)
             2. Use the ssh tool to connect to the machine
             3. Set up the environment with required dependencies
-            4. Run the health check by calling the 'gpu_health_check' tool (this will take care of repo management)
+            4. Run the health check by calling the 'gpu_health_check' tool (this will take care of repository management)
             5. Use the 'dynamodb_insert' tool to store the health check results (DO NOT SKIP THIS)
             6. Run the benchmarking tests (IGNORE THIS FOR NOW!!!)
             7. Clean up resources when done
-            
+            NOTE: You should never need to pull a repository outside of a tool call
             Return the results in JSON format.
             For any long-running operations like installations, please split them into smaller commands and check progress."""
 

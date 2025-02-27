@@ -54,42 +54,42 @@ class ReliabilityTester:
     async def run_single_test(self):
         try:
             
-            print("\n1. Getting available GPUs...")
-            raw_response = await self.tools["get_available_gpus"].arun("")
+            # print("\n1. Getting available GPUs...")
+            # raw_response = await self.tools["get_available_gpus"].arun("")
             
-            # Parse the string response into a json
-            gpus_data = parse_gpu_response(raw_response)
-            print(f"\nParsed GPU Data: {json.dumps(gpus_data, indent=2)}")
+            # # Parse the string response into a json
+            # gpus_data = parse_gpu_response(raw_response)
+            # print(f"\nParsed GPU Data: {json.dumps(gpus_data, indent=2)}")
             
-            if not gpus_data["gpus"]:
-                print("No GPUs available!")
-                return
+            # if not gpus_data["gpus"]:
+            #     print("No GPUs available!")
+            #     return
                 
-            print("\n2. Selecting a GPU...")
-            # Filter for available GPUs and sort by price
-            available_gpus = [
-                gpu for gpu in gpus_data["gpus"] 
-                if gpu["available_count"] > 0
-            ]
+            # print("\n2. Selecting a GPU...")
+            # # Filter for available GPUs and sort by price
+            # available_gpus = [
+            #     gpu for gpu in gpus_data["gpus"] 
+            #     if gpu["available_count"] > 0
+            # ]
             
-            if not available_gpus:
-                print("No GPUs currently available!")
-                return
+            # if not available_gpus:
+            #     print("No GPUs currently available!")
+            #     return
                 
-            # Select cheapest GPU for testing
-            selected_gpu = min(available_gpus, key=lambda x: x["price_per_hour"])
-            print(f"Selected GPU: {json.dumps(selected_gpu, indent=2)}")
+            # # Select cheapest GPU for testing
+            # selected_gpu = min(available_gpus, key=lambda x: x["price_per_hour"])
+            # print(f"Selected GPU: {json.dumps(selected_gpu, indent=2)}")
             
-            print("\n3. Attempting to rent GPU...")
-            rent_response = await self.tools["rent_compute"].arun({
-                "cluster_name": selected_gpu["cluster_name"],
-                "node_name": selected_gpu["node_name"],
-                "gpu_count": "1"
-            })
-            print(f"Rent Response: {rent_response}")
+            # print("\n3. Attempting to rent GPU...")
+            # rent_response = await self.tools["rent_compute"].arun({
+            #     "cluster_name": selected_gpu["cluster_name"],
+            #     "node_name": selected_gpu["node_name"],
+            #     "gpu_count": "1"
+            # })
+            # print(f"Rent Response: {rent_response}")
                         
-            print("\n4. Waiting for instance to start...")
-            await asyncio.sleep(15)  # Give instance time to start
+            # print("\n4. Waiting for instance to start...")
+            # await asyncio.sleep(15)  # Give instance time to start
             
             print("\n5. Getting instance status...")
             status_response = await self.tools["get_gpu_status"].arun("")
@@ -117,8 +117,16 @@ class ReliabilityTester:
             if current_instance['instance']['status'] == 'starting':
                 print("Instance is still starting, waiting longer...")
                 await asyncio.sleep(30)
-                
-                    
+            print("\n6. Establishing SSH connection...")
+            # Print available tools for debugging
+            print("Available tools:", list(self.tools.keys()))
+            
+            ssh_response = await self.tools["ssh_connect"].arun(json.dumps({
+                "host": self.current_gpu["sshCommand"].split("@")[1].split()[0],
+                "username": "ubuntu"
+            }))
+            print(f"SSH Response: {ssh_response}")
+
         except Exception as e:
             print(f"Error during testing: {e}")
             print(f"Error type: {type(e)}")

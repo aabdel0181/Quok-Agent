@@ -1,0 +1,12 @@
+[
+  {
+    "error": "Expecting value: line 1 column 1 (char 0)",
+    "timestamp": "2025-02-27T12:56:11.761149",
+    "gpu_uuid": "GPU-4a53758e-0cd0-18c8-f57a-c839d4d45c96"
+  },
+  {
+    "error": "Expecting value: line 1 column 1 (char 0)",
+    "timestamp": "2025-02-27T12:57:45.626711",
+    "gpu_uuid": "GPU-4a53758e-0cd0-18c8-f57a-c839d4d45c96"
+  }
+]

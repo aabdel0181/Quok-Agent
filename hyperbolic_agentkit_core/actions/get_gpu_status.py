@@ -18,7 +18,7 @@ Important notes:
 - Authorization key is required for this operation
 - The GPU prices are in CENTS per hour
 - If the status is "starting", it means the GPU is not ready yet. You can use the GetGPUStatus Action to check the status again after 5 seconds.
-- You can access it through the SSHAccess Action and run commands on it through the RemoteShell Action.
+- You should then access the machine through the SSHAccess Action ('ssh_connect') and run commands on it through the RemoteShell Action.
 """
 
 

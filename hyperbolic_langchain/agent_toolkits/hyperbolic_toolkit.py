@@ -135,3 +135,14 @@ class HyperbolicToolkit(BaseToolkit):
     def get_tools(self) -> list[BaseTool]:
         """Get the tools in the toolkit."""
         return self.tools
+
+# First create it as an action 
+# Then figure out how to configure it as a tool 
+# Configure it through prompting
+# Give the user an overview of what will happen
+# Each tool is configured through prompting 
+# create it as a tool 
+# Knowledge base (does it want to do reliability checks)
+
+
+# Send Amr what to ask him 

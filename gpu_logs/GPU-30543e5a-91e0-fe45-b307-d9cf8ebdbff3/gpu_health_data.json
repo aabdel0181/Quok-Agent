@@ -1,0 +1,51 @@
+[
+  {
+    "gpu_info": {
+      "uuid": "GPU-30543e5a-91e0-fe45-b307-d9cf8ebdbff3",
+      "name": "NVIDIA H100 80GB HBM3",
+      "driver_version": "550.144.03"
+    },
+    "metrics": {
+      "temperature": {
+        "value": 31,
+        "unit": "C",
+        "status": "normal"
+      },
+      "fan_speed": {
+        "value": "[N/A]",
+        "unit": "%"
+      },
+      "memory": {
+        "used": 1,
+        "total": 81559,
+        "unit": "MB",
+        "utilization": 0,
+        "status": "normal"
+      },
+      "gpu_utilization": {
+        "value": 0,
+        "unit": "%",
+        "status": "normal"
+      },
+      "power": {
+        "draw": 72.78,
+        "limit": 700.0,
+        "unit": "W",
+        "utilization": 10.0,
+        "status": "normal"
+      }
+    },
+    "concerns": [
+      ""
+    ],
+    "status_messages": [
+      "GPU temperature is within normal range",
+      "GPU memory usage is within normal range",
+      "GPU utilization is normal",
+      "GPU power draw is within safe limits"
+    ],
+    "overall_status": "healthy",
+    "timestamp": "2025-02-27T10:28:28.315544",
+    "flagged": false
+  }
+]

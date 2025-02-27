@@ -1,0 +1,17 @@
+[
+  {
+    "concerns": [
+      "Warning: GPU fan is not running. Check cooling system.",
+      ""
+    ],
+    "fine": [
+      "GPU temperature is within normal range ( 30 C).",
+      "GPU memory usage is within normal range (0%).",
+      "GPU utilization is normal ( 0%).",
+      "GPU power draw is within safe limits (2.00% of limit)."
+    ],
+    "flagged": true,
+    "uuid": "GPU-a091f65b-907b-d11c-8e5b-674e0bc24ef5",
+    "timestamp": "2025-02-26T19:01:48.001864"
+  }
+]

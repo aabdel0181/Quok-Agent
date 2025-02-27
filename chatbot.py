@@ -367,7 +367,21 @@ def create_agent_tools(llm, knowledge_base, podcast_knowledge_base, agent_kit, c
         hyperbolic_agentkit = HyperbolicAgentkitWrapper()
         hyperbolic_toolkit = HyperbolicToolkit.from_hyperbolic_agentkit_wrapper(hyperbolic_agentkit)
         tools.extend(hyperbolic_toolkit.get_tools())
-
+    # if os.getenv("USE_RELIABILITY_AGENT", "false").lower() == "true":
+    #     from reliability_agent.agent import ReliabilityAgent
+    #     from reliability_agent.config import BenchmarkConfig
+        
+    #     # Initialize reliability agent
+    #     reliability_agent = ReliabilityAgent(hyperbolic_toolkit)
+        
+    #     # Run benchmark cycles
+    #     num_cycles = int(os.getenv("BENCHMARK_CYCLES", "3"))
+    #     for _ in range(num_cycles):
+    #         await reliability_agent.benchmark_cycle()
+            
+    #     # Save results
+    #     with open("benchmark_results.json", "w") as f:
+    #     json.dump([r.dict() for r in reliability_agent.results], f, indent=2)
     # Add web search if enabled
     if os.getenv("USE_WEB_SEARCH", "false").lower() == "true":
         tools.append(DuckDuckGoSearchRun(
