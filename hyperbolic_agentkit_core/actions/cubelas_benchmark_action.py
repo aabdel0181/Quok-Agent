@@ -78,7 +78,7 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
         """Store benchmark data in DynamoDB using the existing inserter tool."""
         try:
             # Create DynamoDB inserter with CUBLAS table
-            dynamo_inserter = DynamoDBInserterAction()
+            dynamo_inserter = DynamoDBInsertAction()
             
             
             # Use the existing tool to insert data
