@@ -28,3 +28,39 @@
 2025-02-27 11:33:57,726 - INFO -   [93m
 2025-02-27 11:33:57,726 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_113000.json[0m
 2025-02-27 11:33:57,726 - INFO - Benchmark cycle completed. Next run scheduled for: 2025-02-27 11:32:21 (in 2.4 minutes)
+2025-02-27 11:34:56,368 - INFO - Starting new benchmark cycle
+2025-02-27 11:34:56,369 - INFO - Starting benchmark run 20250227_113456
+2025-02-27 11:39:42,828 - INFO - Saved detailed output to benchmark_logs/run_20250227_113456.json
+2025-02-27 11:39:42,829 - INFO - Benchmark 20250227_113456 completed successfully
+2025-02-27 11:39:42,829 - INFO - Last stdout lines:
+2025-02-27 11:39:42,830 - INFO -   [93m-------------------[0m
+2025-02-27 11:39:42,830 - INFO -   [93m
+2025-02-27 11:39:42,830 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_113458.json[0m
+2025-02-27 11:39:42,830 - INFO -   [93m
+2025-02-27 11:39:42,830 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_113458.json[0m
+2025-02-27 11:39:42,831 - INFO - Benchmark cycle completed. Next run scheduled for: 2025-02-27 11:36:10 (in 1.2 minutes)
+2025-02-27 11:40:41,468 - INFO - Starting new benchmark cycle
+2025-02-27 11:40:41,469 - INFO - Starting benchmark run 20250227_114041
+2025-02-27 11:41:14,080 - INFO - Saved detailed output to benchmark_logs/run_20250227_114041.json
+2025-02-27 11:41:14,080 - INFO - Benchmark 20250227_114041 completed successfully
+2025-02-27 11:41:14,080 - INFO - Last stdout lines:
+2025-02-27 11:41:14,080 - INFO -   [93m-------------------[0m
+2025-02-27 11:41:14,080 - INFO -   [93m
+2025-02-27 11:41:14,081 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_114044.json[0m
+2025-02-27 11:41:14,081 - INFO -   [93m
+2025-02-27 11:41:14,081 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_114044.json[0m
+2025-02-27 11:41:14,081 - INFO - Benchmark cycle completed. Next run scheduled for: 2025-02-27 11:42:19 (in 1.6 minutes)
+2025-02-27 11:42:12,801 - INFO - Starting new benchmark cycle
+2025-02-27 11:42:12,802 - INFO - Starting benchmark run 20250227_114212
+2025-02-27 11:46:41,859 - INFO - Saved detailed output to benchmark_logs/run_20250227_114212.json
+2025-02-27 11:46:41,859 - INFO - Benchmark 20250227_114212 completed successfully
+2025-02-27 11:46:41,859 - INFO - Last stdout lines:
+2025-02-27 11:46:41,859 - INFO -   [93m-------------------[0m
+2025-02-27 11:46:41,859 - INFO -   [93m
+2025-02-27 11:46:41,859 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_114215.json[0m
+2025-02-27 11:46:41,859 - INFO -   [93m
+2025-02-27 11:46:41,859 - INFO -   Conversation log saved to: conversation_logs/undetermined/benchmark_conversation_20250227_114215.json[0m
+2025-02-27 11:46:41,859 - ERROR - Last stderr lines:
+2025-02-27 11:46:41,859 - ERROR -   Failed to send compressed multipart ingest: langsmith.utils.LangSmithError: Failed to POST https://api.smith.langchain.com/runs/multipart in LangSmith API. HTTPError('400 Client Error: Bad Request for url: https://api.smith.langchain.com/runs/multipart', '{"error":"Bad request: invalid \'dotted_order\': dotted_order 2dcb1ba1-a987-44dd-85cc-8e4a6c641a8a has timestamp 2025-02-27 18:45:42.132807 +0000 UTC earlier than parent timestamp 2025-02-27 18:45:42.465733 +0000 UTC for run_id:2dcb1ba1-a987-44dd-85cc-8e4a6c641a8a trace_id:f1682296-eea3-4fe0-8b6e-d12dd597b284 dotted_order:20250227T184215534507Zf1682296-eea3-4fe0-8b6e-d12dd597b284.20250227T184542465733Z04320dad-e97d-472b-9054-2999fe7ffd52.20250227T184542132807Z2dcb1ba1-a987-44dd-85cc-8e4a6c641a8a parent_run_id:04320dad-e97d-472b-9054-2999fe7ffd52"}\n')
+2025-02-27 11:46:41,859 - INFO - Benchmark cycle completed. Next run scheduled for: 2025-02-27 11:43:46 (in 1.6 minutes)
+2025-02-27 11:46:44,531 - INFO - Shutting down benchmark runner...
