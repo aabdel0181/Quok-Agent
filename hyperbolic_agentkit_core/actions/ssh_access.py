@@ -16,8 +16,9 @@ Input parameters:
 - port: SSH port number (default: 22)
 
 Important notes:
-- After connecting, use the 'remote_shell' tool to execute commands on the server
 - Use 'ssh_status' command to check connection status
+- After connecting succesffuly, you must first use the 'gpu_health_check' tool to check GPU health
+- After connecting, use the 'remote_shell' tool to execute commands on the server
 - Connection remains active until explicitly disconnected or script ends
 """
 

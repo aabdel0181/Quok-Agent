@@ -23,6 +23,7 @@ It takes the following inputs:
 Important notes:
 - Repository information is automatically retrieved from the .env file.
 - If the repository does not exist, the action will clone it before running the health check.
+- The action will read the readme to understand how to install base dependencies and run the gpu_health.sh script
 - The health check script will analyze the GPU’s temperature, memory usage, power draw, and other key metrics.
 - The action will classify the GPU as either 'flagged' (if there are concerns) or 'healthy' (if there are no major issues).
 - The health data will be stored in a JSON file for tracking and future analysis.
@@ -31,7 +32,7 @@ Important notes:
 class GPUHealthCheckInput(BaseModel):
     """Input argument schema for GPU health check action."""
     data_store: Optional[str] = Field(
-        "gpu_health_data.json",
+        "gpu_health_data_NEW.json",
         description="The file where GPU health data will be stored"
     )
 
@@ -45,17 +46,23 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
     Returns:
         str: A formatted JSON string with GPU health classification.
     """
-    gpu_check_script = "gpu_health.sh"
-    repo_name = os.getenv("REPO_NAME")
-    repo_url = os.getenv("REPO_URL")
+    # gpu_check_script = "gpu_health.sh"
+    # repo_name = os.getenv("REPO_NAME")
+    # repo_url = os.getenv("REPO_URL")
+    repo_name = "Quok-benchmark"
+    repo_url = "https://github.com/aabdel0181/Quok-benchmark.git"
 
-    if not repo_name or not repo_url:
-        return json.dumps({"error": "Missing REPO_NAME or REPO_URL in .env file"}, indent=2)
-
-    def get_gpu_uuid() -> str:
-        """Retrieve GPU UUID from the system."""
-        uuid_output = execute_remote_command("nvidia-smi --query-gpu=uuid --format=csv,noheader")
-        return uuid_output.strip().split('\n')[0] if uuid_output else "unknown_gpu"
+    # if not repo_name or not repo_url:
+    #     return json.dumps({"error": "Missing REPO_NAME or REPO_URL in .env file"}, indent=2)
+    def check_dependencies():
+        """Ensure required dependencies are available."""
+        print("Checking dependencies...")
+        # Check for bc and jq (required by the script)
+        for pkg in ['bc', 'jq']:
+            result = execute_remote_command(f"which {pkg}")
+            if not result.strip():
+                print(f"Installing {pkg}...")
+                execute_remote_command(f"sudo apt-get update && sudo apt-get install -y {pkg}")
 
     def repo_exists() -> bool:
         """Check if the repository exists in the current directory via SSH."""
@@ -70,50 +77,69 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         """Clone the repository if it does not exist via SSH."""
         print(f"Repository '{repo_name}' not found. Cloning from {repo_url}...")
         execute_remote_command(f"git clone {repo_url}")
-        output = execute_remote_command(f"cd {repo_name} && ls")
+        output = execute_remote_command(f"cd {repo_name} && chmod +x gpu_health.sh")
         print(f"Cloned repository contents: {output}")
 
-    def run_gpu_health_check():
-        """Run the GPU health check script and return results as a dictionary."""
-        permission_check = f"cd {repo_name} && chmod +x {gpu_check_script}"
-        execute_remote_command(permission_check)
+    def install_dependencies():
+            """Install required dependencies for the benchmark suite."""
+            print("Installing dependencies...")
+            execute_remote_command(f"cd {repo_name} && python3 main.py --install")
 
-        command = f"cd {repo_name} && bash {gpu_check_script}"
-        output = execute_remote_command(command)
-
-        print("Raw GPU Health Check Output:")
-        print(output)
-
-        if not output:
-            print("No output from GPU health check script.")
-            return {"error": "GPU health check script produced no output"}
+    def run_health_check() -> dict:
+        """Run the GPU health check script and parse results."""
+        print("Running GPU health check...")
+        try:
+            # Execute the health check script
+            result = execute_remote_command(f"cd {repo_name} && cd {"scripts"} && ./gpu_health.sh")
+            print("result: ", result)
+            # Parse the JSON output
+            health_data = json.loads(result)
+            
+            # Add timestamp and determine if flagged
+            health_data.update({
+                "timestamp": datetime.datetime.utcnow().isoformat(),
+                "flagged": health_data.get("overall_status") != "healthy"
+            })
+            
+            return health_data
+            
+        except Exception as e:
+            print(f"Error running health check: {e}")
+            return {
+                "error": str(e),
+                "timestamp": datetime.datetime.utcnow().isoformat(),
+                "gpu_uuid": get_gpu_uuid()
+            }
         
-        return parse_health_check_output(output)
+    def get_gpu_uuid() -> str:
+        """Retrieve GPU UUID from the system."""
+        uuid_output = execute_remote_command("nvidia-smi --query-gpu=uuid --format=csv,noheader")
+        return uuid_output.strip().split('\n')[0] if uuid_output else "unknown_gpu"
 
-    def parse_health_check_output(output: str):
-        """Parses GPU health check output into a structured dictionary."""
-        gpu_data = {"concerns": [], "fine": [], "flagged": False}
-        capturing_section = None
+    # def parse_health_check_output(output: str):
+    #     """Parses GPU health check output into a structured dictionary."""
+    #     gpu_data = {"concerns": [], "fine": [], "flagged": False}
+    #     capturing_section = None
 
-        for line in output.split("\n"):
-            line = line.strip()
-            if "Concerns detected" in line:
-                capturing_section = "concerns"
-            elif "Fine status" in line:
-                capturing_section = "fine"
-            elif "--------------------------" in line:
-                capturing_section = None
-            elif capturing_section:
-                gpu_data[capturing_section].append(line)
+    #     for line in output.split("\n"):
+    #         line = line.strip()
+    #         if "Concerns detected" in line:
+    #             capturing_section = "concerns"
+    #         elif "Fine status" in line:
+    #             capturing_section = "fine"
+    #         elif "--------------------------" in line:
+    #             capturing_section = None
+    #         elif capturing_section:
+    #             gpu_data[capturing_section].append(line)
         
-        gpu_data["flagged"] = bool(gpu_data["concerns"])
-        gpu_data["uuid"] = get_gpu_uuid()
-        gpu_data["timestamp"] = datetime.datetime.utcnow().isoformat()
-        return gpu_data
+    #     gpu_data["flagged"] = bool(gpu_data["concerns"])
+    #     gpu_data["uuid"] = get_gpu_uuid()
+    #     gpu_data["timestamp"] = datetime.datetime.utcnow().isoformat()
+    #     return gpu_data
 
-    def store_data(gpu_data):
-        """Store GPU health data in a JSON file for tracking."""
-        gpu_uuid = gpu_data.get("uuid", "unknown_gpu")
+    def store_data(health_data: dict):
+        """Store GPU health data in the specified location."""
+        gpu_uuid = health_data.get("gpu_info", {}).get("uuid", "unknown_gpu")
         log_folder = os.path.join("gpu_logs", gpu_uuid)
         os.makedirs(log_folder, exist_ok=True)
         log_file = os.path.join(log_folder, data_store)
@@ -123,25 +149,35 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
             if os.path.exists(log_file):
                 with open(log_file, "r") as f:
                     existing_data = json.load(f)
-            existing_data.append(gpu_data)
+            existing_data.append(health_data)
             with open(log_file, "w") as f:
                 json.dump(existing_data, f, indent=2)
-            print(f"GPU health data stored successfully in {log_file}")
+            print(f"GPU health data stored in {log_file}")
         except Exception as e:
             print(f"Error storing GPU health data: {e}")
 
-    # Ensure repo exists, otherwise clone it
-    if not repo_exists():
-        clone_repo()
-    
-    print("Running GPU health check...")
-    gpu_data = run_gpu_health_check()
-    store_data(gpu_data)
-
-    return json.dumps({
-        "gpu_health": gpu_data,
-        "status": "flagged" if gpu_data["flagged"] else "healthy"
-    }, indent=2)
+    # Main execution flow
+    try:
+        if not repo_exists():
+            clone_repo()
+        
+        check_dependencies()
+        health_data = run_health_check()
+        store_data(health_data)
+        
+        return json.dumps({
+            "gpu_health": health_data,
+            "status": "flagged" if health_data.get("flagged", False) else "healthy"
+        }, indent=2)
+        
+    except Exception as e:
+        error_data = {
+            "error": str(e),
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "gpu_uuid": get_gpu_uuid()
+        }
+        store_data(error_data)
+        return json.dumps({"error": str(e)}, indent=2)
 
 class GPUHealthCheckAction(HyperbolicAction):
     """GPU health check action."""
