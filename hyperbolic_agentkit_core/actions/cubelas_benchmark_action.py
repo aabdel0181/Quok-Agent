@@ -6,7 +6,7 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from hyperbolic_agentkit_core.actions.dynamodb_inserter import DynamoDBInserterAction
+from hyperbolic_agentkit_core.actions.dynamodb_inserter import DynamoDBInsertAction
 
 from hyperbolic_agentkit_core.actions.hyperbolic_action import HyperbolicAction
 from hyperbolic_agentkit_core.actions.remote_shell import RemoteShellAction, RemoteShellInput
