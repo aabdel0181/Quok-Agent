@@ -36,7 +36,7 @@ class ReliabilityAgent:
         # create REACT agent with correct initialization
         system_message = """You are an AI agent specialized in decentralized GPU reliability assessments and benchmarking.
         You have access to tools for managing GPU instances and running commands.
-        Use these tools to set up and run benchmarks efficiently, documenting any errors along the way. 
+        Use these tools to set up and run health checks and then benchmarks efficiently, storing results in the dynamodb along the way. 
         Please note that you are non-interactive."""
         
         self.agent_executor = create_react_agent(
@@ -101,11 +101,13 @@ class ReliabilityAgent:
             self.logger.start_benchmark()
             prompt = """Run a complete GPU benchmark cycle:
             0. First check, if we already have a GPU instance running
-            1. If not, get a list of available GPUs and select the cheapest one
-            2. Set up the environment with required dependencies
-            3. Run the health check 
-            4. Run the benchmarking tests
-            5. Clean up resources when done
+            1. If not, get a list of available GPUs and select a RANDOM one
+            2. Use the ssh tool to connect to the machine
+            3. Set up the environment with required dependencies
+            4. Run the health check by calling the 'gpu_health_check' tool (this will take care of repo management)
+            5. Use the 'dynamodb_insert' tool to store the health check results (DO NOT SKIP THIS)
+            6. Run the benchmarking tests (IGNORE THIS FOR NOW!!!)
+            7. Clean up resources when done
             
             Return the results in JSON format.
             For any long-running operations like installations, please split them into smaller commands and check progress."""

@@ -15,19 +15,20 @@ from hyperbolic_agentkit_core.actions.remote_shell import execute_remote_command
 load_dotenv()
 
 GPU_HEALTH_CHECK_PROMPT = """
-This tool will check the GPU health of the machine it is running on.
+This tool performs a comprehensive GPU health check on the machine it is running on as part of a multi-step benchmarking workflow. The process must follow these steps in strict order:
 
-It takes the following inputs:
-- data_store: The file where GPU health data will be stored.
+1. Verify that the benchmark repository (as specified in the .env file) exists; if not, clone it.
+2. Check and install any required dependencies.
+3. Navigate to the repository's "scripts" directory, update file permissions (using 'chmod +x') on the GPU health script (gpu_health.sh), and execute the script using sudo.
+4. Parse the scripts output, which is expected to be a JSON object containing key metrics such as temperature, memory usage, GPU utilization, and power draw.
+5. Augment the JSON output with a current timestamp and additional metadata (e.g., GPU UUID).
+6. Store the resulting health data in a local file as specified by the 'data_store' parameter.
+7. **Immediately after local storage, call the 'dynamodb_inserter' tool to insert the GPU health data into the GPUHealthChecks DynamoDB table.**
+8. Only after confirming that the data has been successfully inserted into DynamoDB, proceed with running the remainder of the benchmarking tests.
 
-Important notes:
-- Repository information is automatically retrieved from the .env file.
-- If the repository does not exist, the action will clone it before running the health check.
-- The action will read the readme to understand how to install base dependencies and run the gpu_health.sh script
-- The health check script will analyze the GPU’s temperature, memory usage, power draw, and other key metrics.
-- The action will classify the GPU as either 'flagged' (if there are concerns) or 'healthy' (if there are no major issues).
-- The health data will be stored in the GPUHealthChecks DynamoDB table using the dynamodb_inserter tool. 
+Ensure that every step is executed in sequence with proper error handling and that the dynamodb_inserter tool is explicitly invoked using the output data.
 """
+
 
 class GPUHealthCheckInput(BaseModel):
     """Input argument schema for GPU health check action."""
@@ -69,7 +70,7 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         result = execute_remote_command(f"ls | grep {repo_name}")
         if result.strip():
             output = execute_remote_command(f"cd {repo_name} && ls")
-            print(f"Inside the repo contents: {output}")
+            # print(f"Inside the repo contents: {output}")
             return True
         return False
 
@@ -90,16 +91,16 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         print("Running GPU health check...")
         try:
             # Execute the health check script
-            
+
              # First, change to the scripts directory and update permissions on the script
             chmod_command = f"cd {repo_name}/scripts && chmod +x gpu_health.sh"
             chmod_output = execute_remote_command(chmod_command)
-            print("chmod output:", chmod_output)
+            # print("chmod output:", chmod_output)
             
             # Then, run the script using sudo
             run_command = f"cd {repo_name}/scripts && sudo ./gpu_health.sh"
             result = execute_remote_command(run_command)
-            print("result: ", result)
+            # print("result: ", result)
             health_data = json.loads(result)
             
             # Add timestamp and determine if flagged
@@ -123,38 +124,46 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         uuid_output = execute_remote_command("nvidia-smi --query-gpu=uuid --format=csv,noheader")
         return uuid_output.strip().split('\n')[0] if uuid_output else "unknown_gpu"
 
-    def store_data(health_data: dict):
-        """Store GPU health data in the specified location."""
-        gpu_uuid = health_data.get("gpu_info", {}).get("uuid", "unknown_gpu")
-        log_folder = os.path.join("gpu_logs", gpu_uuid)
-        os.makedirs(log_folder, exist_ok=True)
-        log_file = os.path.join(log_folder, data_store)
 
-        try:
-            existing_data = []
-            if os.path.exists(log_file):
-                with open(log_file, "r") as f:
-                    existing_data = json.load(f)
-            existing_data.append(health_data)
-            with open(log_file, "w") as f:
-                json.dump(existing_data, f, indent=2)
-            print(f"GPU health data stored in {log_file}")
-        except Exception as e:
-            print(f"Error storing GPU health data: {e}")
-
-    # Main execution flow
+      # Main execution flow
     try:
         if not repo_exists():
             clone_repo()
         
         check_dependencies()
-        health_data = run_health_check()
-        store_data(health_data)
+        raw_health_data = run_health_check()
         
-        return json.dumps({
-            "gpu_health": health_data,
-            "status": "flagged" if health_data.get("flagged", False) else "healthy"
-        }, indent=2)
+        # Transform the data for DynamoDB insertion:
+        try:
+            # Extract GPU UUID from nested structure
+            gpu_uuid = raw_health_data.get("gpu_info", {}).get("uuid")
+            if not gpu_uuid:
+                raise ValueError("GPU UUID not found in health data")
+            
+            # Extract timestamp string and convert to Unix timestamp
+            timestamp_str = raw_health_data.get("timestamp")
+            if not timestamp_str:
+                raise ValueError("Timestamp not found in health data")
+            dt = datetime.datetime.fromisoformat(timestamp_str)
+            unix_timestamp = int(dt.timestamp())
+            
+            # Remove the 'uuid' from gpu_info and the 'timestamp' from the nested structure
+            if "uuid" in raw_health_data.get("gpu_info", {}):
+                del raw_health_data["gpu_info"]["uuid"]
+            if "timestamp" in raw_health_data:
+                del raw_health_data["timestamp"]
+            
+            final_output = {
+                "GPU_UUID": gpu_uuid,
+                "Timestamp": unix_timestamp,
+                "gpu_health": raw_health_data,
+                "status": "flagged" if raw_health_data.get("flagged", False) else "healthy"
+            }
+        except Exception as e:
+            print(f"Error transforming health data for DynamoDB: {e}")
+            return json.dumps({"error": f"Error transforming data: {str(e)}"}, indent=2)
+        
+        return json.dumps(final_output, indent=2)
         
     except Exception as e:
         error_data = {
@@ -162,7 +171,6 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "gpu_uuid": get_gpu_uuid()
         }
-        store_data(error_data)
         return json.dumps({"error": str(e)}, indent=2)
 
 class GPUHealthCheckAction(HyperbolicAction):
