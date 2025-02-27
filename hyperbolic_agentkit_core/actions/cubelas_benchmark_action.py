@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
+from hyperbolic_agentkit_core.actions.dynamodb_inserter import DynamoDBInserterAction
 
 from hyperbolic_agentkit_core.actions.hyperbolic_action import HyperbolicAction
 from hyperbolic_agentkit_core.actions.remote_shell import RemoteShellAction, RemoteShellInput
@@ -23,6 +24,15 @@ This tool runs CUBLAS benchmarks on the machine it is running on. The process fo
 4. Run the CUBLAS benchmark
 5. Parse and return the results from the output file
 6. Store the benchmark results with timestamp and metadata
+7. Store the data in DynamoDB with different table: 
+"# First run CUBLAS benchmark
+benchmark_result = await agent.run_tool("cublas_benchmark")
+
+# Then store in DynamoDB with different table
+await agent.run_tool("dynamodb_insert", {
+    "table_name": "CUBLASBenchmarks",
+    "data": benchmark_result
+})"
 
 The tool will return the benchmark results in a structured JSON format.
 """
@@ -63,6 +73,24 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
         execute_remote_command(f"cd {repo_name} && chmod +x scripts/install/install.sh")
         execute_remote_command(f"cd {repo_name} && chmod +x benchmarks/cublas/run.sh")
 
+
+    def store_in_dynamodb(benchmark_data: dict) -> str:
+        """Store benchmark data in DynamoDB using the existing inserter tool."""
+        try:
+            # Create DynamoDB inserter with CUBLAS table
+            dynamo_inserter = DynamoDBInserterAction()
+            
+            
+            # Use the existing tool to insert data
+            response = dynamo_inserter.func(
+                table_name="CUBLASBenchmarks",
+                data=benchmark_data
+            )
+            
+            return response
+            
+        except Exception as e:
+            return f"Error inserting data into DynamoDB: {str(e)}"
     def install_dependencies():
         """Install CUBLAS dependencies."""
         print("Installing CUBLAS dependencies...")
@@ -163,6 +191,9 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
             "gpu_uuid": get_gpu_uuid()
         }
         store_data(error_data)
+        dynamo_response = store_in_dynamodb(benchmark_data)
+        print(dynamo_response)
+
         return json.dumps({"error": str(e)}, indent=2)
 
 class CUBLASBenchmarkAction(HyperbolicAction):
