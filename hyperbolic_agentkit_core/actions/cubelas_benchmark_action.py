@@ -131,23 +131,25 @@ def run_cublas_benchmark(data_store: str = "cublas_benchmark_data.json") -> str:
         return uuid_output.strip().split('\n')[0] if uuid_output else "unknown_gpu"
 
     def parse_benchmark_output(raw_output: str) -> dict:
-        """Parse the benchmark output into structured data."""
-        # Initialize results structure
+        """Parse the CUBLAS benchmark output into structured data."""
         results = {
-            "performance_metrics": [],
-            "summary": {}
+            "matrix_size": None,
+            "execution_time_ms": None,
+            "performance_gflops": None
         }
         
         try:
-            # Split output into lines and parse
             lines = raw_output.strip().split('\n')
             for line in lines:
-                # Add parsing logic based on the actual output format
-                # This is a placeholder - adjust based on actual output format
-                if line.startswith("TEST"):
-                    results["performance_metrics"].append(line)
-                elif line.startswith("Average"):
-                    results["summary"]["average"] = line
+                if "Matrix Size:" in line:
+                    size = line.split(": ")[1].strip()
+                    results["matrix_size"] = size
+                elif "Execution Time:" in line:
+                    time = float(line.split(": ")[1].split()[0])
+                    results["execution_time_ms"] = time
+                elif "Performance:" in line:
+                    gflops = float(line.split(": ")[1].split()[0])
+                    results["performance_gflops"] = gflops
                     
             return results
         except Exception as e:

@@ -79,7 +79,7 @@ def check_gpu_health(data_store: str = "gpu_health_data.json") -> str:
         print(f"Repository '{repo_name}' not found. Cloning from {repo_url}...")
         execute_remote_command(f"git clone {repo_url}")
         output = execute_remote_command(f"cd {repo_name} && sudo chmod +x gpu_health.sh")
-        print(f"Cloned repository contents: {output}")
+        # print(f"Cloned repository contents: {output}")
 
     def install_dependencies():
             """Install required dependencies for the benchmark suite."""
