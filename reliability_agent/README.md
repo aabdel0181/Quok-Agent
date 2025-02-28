@@ -6,6 +6,7 @@ The Quok.it Reliability Agent is a specialized component of the Hyperbolic Agent
 ## Architecture
 
 ### Directory Structure
+
 reliability_agent/
 ├── init.py
 |── run.py # Single entrance function 
