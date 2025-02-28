@@ -8,13 +8,15 @@ The Quok.it Reliability Agent is a specialized component of the Hyperbolic Agent
 ### Directory Structure
 reliability_agent/
 ├── init.py
+|── run.py # Single entrance function 
+|── ec2-continuous.py # repeatedly selects new random gpus and runs run.py on them
 ├── agent.py # Main agent implementation
-├── config.py # Configuration settings
-├── actions/ # Custom actions/tools
-├── models/ # Data models and schemas
-├── utils/ # Helper functions
-└── tests/ # Test suite
 
+NEW TOOLS: 
+hyperbolic_agentkit_core/actions/
+- cubelas_benchmark_action.py # runs cublas benchmarking
+- dynamodb_inserter.py # inserts error, benchmark, and health data into dynamodb
+- gpu_health_check_action.py  # runs health checks and determines any areas of concern
 
 ### Core Components
 
@@ -23,21 +25,9 @@ reliability_agent/
    - Handles GPU selection, rental, testing, and result collection
    - Integrates with Hyperbolic toolkit for GPU operations
 
-2. **Configuration (config.py)**
-   - Benchmarking repository 
-   - Scoring weights
-   - Smart contract 
-   - Test suite configurations
-
-3. **Models (models/)**
-   - BenchmarkResult: Structured data model for test results
-   - GPUMetrics: Performance metric schemas
-   - TestSuite: Benchmark test definitions
-
-4. **Actions (actions/)**
-   - Custom tools extending Hyperbolic's base toolkit
-   - Specialized benchmark operations
-   - Result processing actions
+2. **Custom Tools**
+   - Allow the agent to take actions in the role of a GPU Quality Assurance Site Reliability Engineer (SRE)
+     
 
 ## Workflow
 
@@ -51,7 +41,7 @@ reliability_agent/
    graph TD
    A[Get Available GPUs] --> B[Select Random GPU]
    B --> C[Rent GPU Instance]
-   C --> D[Run Benchmark Suite]
+   C --> D[Run Health & Benchmark Suite]
    D --> E[Collect Metrics]
    E --> F[Calculate Score]
    F --> G[Store Results]
@@ -70,25 +60,9 @@ reliability_agent/
    - Reliability indicators
    - Historical comparison
 
-## Integration
+### NEW REQUIRED Environment Variables (in .env)
 
-### With Hyperbolic AgentKit
-
-python
-
-#### Enable in .env
-
-- USE_RELIABILITY_AGENT=true
-- BENCHMARK_CYCLES=3
-
-#### Initialize with main agent
-
-if os.getenv("USE_RELIABILITY_AGENT", "false").lower() == "true":
-reliability_agent = ReliabilityAgent(hyperbolic_toolkit)
-await reliability_agent.run_cycles()
-
-### Required Environment Variables
-
-USE_RELIABILITY_AGENT=true # Enable reliability agent
-BENCHMARK_CYCLES=3 # Number of test cycles
-QUOK_API_KEY = <yourkey> # API to the reliability platform quok.it ()
+REPO_NAME=Quok-benchmark
+REPO_URL=https://github.com/aabdel0181/Quok-benchmark.git
+ACCESS_KEY=[DYNAMO_DB_ACCESS_KEY]
+SECRET_ACCESS_KEY=[DYNAMO_DB_SECRET_ACCESS_KEY]
