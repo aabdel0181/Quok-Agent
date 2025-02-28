@@ -47,6 +47,7 @@ def execute_dynamodb_insert(data: dict, table: str | None, data_type: str) -> st
     if table is None:
         table_mapping = {
             "GPUHealthCheck": "GPUHealthChecks",
+            "CUBLASBenchmark": "CUBLASBenchmarks", 
             # Add additional mappings as needed for different data types
         }
         table = table_mapping.get(data_type, "GeneralData")
