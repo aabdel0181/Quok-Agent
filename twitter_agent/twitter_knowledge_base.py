@@ -5,7 +5,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import numpy as np
-from utils import print_system, print_error
+from base_utils.utils import print_system, print_error
 import asyncio
 import os
 import random

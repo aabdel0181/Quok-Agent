@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 from dotenv import load_dotenv
 from datetime import datetime
 import json
@@ -9,13 +10,13 @@ import asyncio
 import warnings
 
 # Import prompts
-from prompts import (
+from base_utils.prompts import (
     PODCAST_QUERY_PROMPT,
     PODCAST_TOPICS,
     PODCAST_ASPECTS,
     BASIC_QUERY_TEMPLATES
 )
-from tooldescriptions import (
+from base_utils.tooldescriptions import (
     TWITTER_REPLY_CHECK_DESCRIPTION,
     TWITTER_ADD_REPLIED_DESCRIPTION,
     TWITTER_REPOST_CHECK_DESCRIPTION,
@@ -79,7 +80,7 @@ from twitter_agent.twitter_knowledge_base import TweetKnowledgeBase, update_know
 from github_agent.custom_github_actions import GitHubAPIWrapper, create_evaluate_profiles_tool
 
 # Import local modules
-from utils import (
+from base_utils.utils import (
     Colors, 
     print_ai, 
     print_system, 
@@ -89,6 +90,9 @@ from utils import (
     format_ai_message_content
 )
 from podcast_agent.podcast_knowledge_base import PodcastKnowledgeBase
+
+# Add the import for WritingTool near the other imports at the top of the file
+from writing_agent.writing_tool import WritingTool
 
 async def generate_llm_podcast_query(llm: ChatAnthropic = None) -> str:
     """
@@ -285,6 +289,16 @@ def create_agent_tools(llm, knowledge_base, podcast_knowledge_base, agent_kit, c
         browser_toolkit = BrowserToolkit.from_llm(llm)
         tools.extend(browser_toolkit.get_tools())
 
+    # Add Writing Agent Tools if enabled
+    if os.getenv("USE_WRITING_AGENT", "true").lower() == "true":
+        print_system("Adding writing agent tools...")
+        # Create output directory for generated articles
+        output_dir = os.path.join(os.getcwd(), "generated_articles")
+        os.makedirs(output_dir, exist_ok=True)
+        writing_tool = WritingTool(llm=llm)
+        tools.append(writing_tool)
+        print_system(f"Added writing agent tool (output directory: {output_dir})")
+
     # Add Twitter Knowledge Base Tools if enabled
     if os.getenv("USE_TWITTER_KNOWLEDGE_BASE", "true").lower() == "true" and knowledge_base is not None:
         tools.append(Tool(
@@ -416,11 +430,14 @@ async def initialize_agent():
         personality = process_character_config(character)
 
         # Create config first before using 
+        checkpoint_id = str(uuid.uuid4())
         config = {
             "configurable": {
                 "thread_id": f"{character['name']} Agent",
                 "character": character["name"],
                 "recursion_limit": 100,
+                "checkpoint_id": checkpoint_id,
+                "langgraph_checkpoint_id": checkpoint_id,
             },
             "character": {
                 "name": character["name"],
@@ -608,15 +625,21 @@ async def initialize_agent():
                 print_error("GitHub tools will not be available")
 
         # Create the runnable config with increased recursion limit
-        runnable_config = RunnableConfig(recursion_limit=200)
+        runnable_config = RunnableConfig(
+        recursion_limit=200,
+            configurable={
+                "thread_id": f"{character['name']} Agent",
+                "character": character["name"],
+                "recursion_limit": 100,
+                "langgraph_checkpoint_id": config["configurable"]["langgraph_checkpoint_id"],
+            }
+    )
 
         for tool in tools:
             print_system(tool.name)
 
         # Initialize memory saver
         memory = MemorySaver()
-
-       
 
         return create_react_agent(
             llm,
@@ -677,8 +700,8 @@ async def run_chat_mode(agent_executor, config, runnable_config):
         recursion_limit=200,
         configurable={
             "thread_id": config["configurable"]["thread_id"],
-            "checkpoint_ns": "chat_mode",
-            "checkpoint_id": str(datetime.now().timestamp())
+            "langgraph_checkpoint_ns": "chat_mode",
+            "langgraph_checkpoint_id": config["configurable"]["langgraph_checkpoint_id"]
         }
     )
     
@@ -730,8 +753,8 @@ async def run_twitter_automation(agent_executor, config, runnable_config):
         recursion_limit=200,
         configurable={
             "thread_id": config["configurable"]["thread_id"],
-            "checkpoint_ns": "autonomous_mode",
-            "checkpoint_id": str(datetime.now().timestamp())
+            "langgraph_checkpoint_ns": "chat_mode",
+            "langgraph_checkpoint_id": config["configurable"]["langgraph_checkpoint_id"]
         }
     )
     

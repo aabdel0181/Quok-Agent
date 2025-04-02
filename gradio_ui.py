@@ -4,7 +4,7 @@ import asyncio
 from chatbot import initialize_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.runnables import RunnableConfig
-from utils import format_ai_message_content
+from base_utils.utils import format_ai_message_content
 from datetime import datetime
 
 # Global variables to store initialized agent and config

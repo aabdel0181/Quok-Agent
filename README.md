@@ -48,6 +48,35 @@ This template demonstrates a chatbot with the following capabilities:
 - Twitter Knowledge Base: Scrapes tweets from KOLs for informed X posting
 - Podcast Knowledge Base: Uses podcast transcripts for accurate Q&A
 
+## Writing Agent
+
+The Writing Agent is a powerful LLM-powered tool that creates high-quality, well-researched articles using Claude. Key capabilities include:
+
+- **Content Generation**: Generate well-researched articles on any topic with configurable length and style
+- **Style Emulation**: 
+  - Analyze and emulate writing styles from reference documents (PDF format)
+  - Learn from multiple reference documents simultaneously
+  - Maintain consistent tone and writing patterns while creating new content
+- **Web Research**: 
+  - Conduct thorough research using Tavily API
+  - Automatically cite sources in APA format
+  - Include relevant quotes and statistics from sources
+  - Generate a properly formatted references section
+- **Document Processing**:
+  - Support for PDF files with automatic text extraction
+  - Smart handling of document formatting and spacing
+  - Process multiple reference documents in a single session
+  
+Configuration:
+- Place reference documents in `writing_agent/reference_docs/`
+- Required API keys:
+  - `ANTHROPIC_API_KEY`: For Claude content generation
+  - `TAVILY_API_KEY`: For web research
+- Default parameters:
+  - Target length: 1500 words
+  - Model: Claude 3.5 Sonnet
+  - Citation style: APA format (currently the only supported format)
+
 ## Prerequisites
 
 ### 1. System Requirements
@@ -75,7 +104,9 @@ This template demonstrates a chatbot with the following capabilities:
   - **X (Twitter) API Access**
     - Create a developer account at [Twitter Developer Portal](https://developer.twitter.com)
     - Required credentials: API Key/Secret, Access Token/Secret, Bearer Token, Client ID/Secret
-  - **Web Search**: Tavily API key
+  - **Web Search**: 
+    - Tavily API key (Required for Writing Agent as well as core tool capabilities)
+    - Sign up at [Tavily](https://tavily.com)
   - **Google Cloud** (for Podcast Agent/Gemini)
     - Create a service account and download key as `eaccservicekey.json` into the project root
   - **LangChain**: Endpoint, API key, and project name
@@ -245,6 +276,7 @@ New agentic capabilities should be organized in dedicated folders at the root le
 - `twitter_agent/` - Twitter API integration and knowledge base
 - `browser_agent/` - Browser automation capabilities
 - `podcast_agent/` - Podcast processing and transcription
+- `writing_agent/` - Content generation and research capabilities
 
 Each agent folder typically contains:
 
@@ -258,7 +290,7 @@ Each agent folder typically contains:
 Hyperbolic-AgentKit/
 ├── characters/              # Character configurations
 │   └── default.json        # Default character profile
-├── *_agent/                # Agent-specific capabilities
+├── *_agent/                # Agent-specific capabilities (writing_agent, browser_agent, podcast_agent, etc.)
 │   ├── __init__.py
 │   └── core modules
 ├── server/                 # Voice agent interface

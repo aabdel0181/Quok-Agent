@@ -12,7 +12,7 @@ from datetime import datetime
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import json
-from utils import print_system, print_error
+from base_utils.utils import print_system, print_error
 
 class PodcastSegment(BaseModel):
     id: str  # We'll generate this
@@ -175,7 +175,7 @@ class PodcastKnowledgeBase:
             print_error(f"Error getting processed files: {e}")
             return set()
 
-    def process_all_json_files(self, directory: str = "jsonoutputs"):
+    def process_all_json_files(self, directory: str = "/Users/amr/Hyperbolic-AgentKit/youtube_scraper/jsonoutputs"):
         """Process all JSON files in the specified directory, skipping already processed ones."""
         try:
             # Convert to absolute path relative to the project root

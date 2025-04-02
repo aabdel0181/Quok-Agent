@@ -24,6 +24,8 @@ poetry.lock
 
 # Virtual Environment
 .env
+.env.*
+!.env.example
 .venv
 venv/
 ENV/
@@ -69,4 +71,8 @@ twitter_state_default.db
 videofiles/
 
 jsonoutputs/
+
+youtube_scraper/downloaded_videos/
+youtube_scraper/split_videos/
+youtube_scraper/processed_videos.db
 

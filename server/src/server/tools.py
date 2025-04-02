@@ -17,20 +17,20 @@ from langchain_anthropic import ChatAnthropic
 from dotenv import load_dotenv
 from browser_agent import BrowserToolkit
 
-from coinbase_agentkit import (
-    AgentKit,
-    AgentKitConfig,
-    CdpWalletProvider,
-    CdpWalletProviderConfig,
-    cdp_api_action_provider,
-    cdp_wallet_action_provider,
-    erc20_action_provider,
-    pyth_action_provider,
-    wallet_action_provider,
-    weth_action_provider,
-    twitter_action_provider,
-)
-from coinbase_agentkit_langchain import get_langchain_tools
+# from coinbase_agentkit import (
+#     AgentKit,
+#     AgentKitConfig,
+#     CdpWalletProvider,
+#     CdpWalletProviderConfig,
+#     cdp_api_action_provider,
+#     cdp_wallet_action_provider,
+#     erc20_action_provider,
+#     pyth_action_provider,
+#     wallet_action_provider,
+#     weth_action_provider,
+#     twitter_action_provider,
+# )
+# from coinbase_agentkit_langchain import get_langchain_tools
 
 from hyperbolic_langchain.agent_toolkits import HyperbolicToolkit
 from hyperbolic_langchain.utils import HyperbolicAgentkitWrapper
@@ -42,33 +42,36 @@ from twitter_agent.custom_twitter_actions import (
     create_get_user_tweets_tool,
     create_retweet_tool
 )
-wallet_data_file = "wallet_data.txt"
+# wallet_data_file = "wallet_data.txt"
 
-wallet_data = None
-if os.path.exists(wallet_data_file):
-    with open(wallet_data_file) as f:
-        wallet_data = f.read()
+# Load environment variables
+load_dotenv(override=True)
 
-wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
-    api_key_name=os.getenv("CDP_API_KEY_NAME"),
-    api_key_private=os.getenv("CDP_API_KEY_PRIVATE"),
-    network_id=os.getenv("CDP_NETWORK_ID", "base-mainnet"),
-    wallet_data=wallet_data if wallet_data else None
-))
+# wallet_data = None
+# if os.path.exists(wallet_data_file):
+#     with open(wallet_data_file) as f:
+#         wallet_data = f.read()
+
+# wallet_provider = CdpWalletProvider(CdpWalletProviderConfig(
+#     api_key_name=os.getenv("CDP_API_KEY_NAME"),
+#     api_key_private=os.getenv("CDP_API_KEY_PRIVATE_KEY"),
+#     network_id=os.getenv("CDP_NETWORK_ID", "base-mainnet"),
+#     wallet_data=wallet_data if wallet_data else None
+# ))
 
 
-agent_kit = AgentKit(AgentKitConfig(
-    wallet_provider=wallet_provider,
-    action_providers=[
-        cdp_api_action_provider(),
-        cdp_wallet_action_provider(),
-        erc20_action_provider(),
-        pyth_action_provider(),
-        wallet_action_provider(),
-        weth_action_provider(),
-        twitter_action_provider(),
-    ]
-))
+# agent_kit = AgentKit(AgentKitConfig(
+#     wallet_provider=wallet_provider,
+#     action_providers=[
+#         cdp_api_action_provider(),
+#         cdp_wallet_action_provider(),
+#         erc20_action_provider(),
+#         pyth_action_provider(),
+#         wallet_action_provider(),
+#         weth_action_provider(),
+#         twitter_action_provider(),
+#     ]
+# ))
 
 from hyperbolic_langchain.agent_toolkits import HyperbolicToolkit
 from hyperbolic_langchain.utils import HyperbolicAgentkitWrapper
@@ -81,8 +84,7 @@ from twitter_agent.custom_twitter_actions import (
 )
 
 
-# Load environment variables
-load_dotenv(override=True)
+
 
 ALLOW_DANGEROUS_REQUEST = True
 
@@ -112,7 +114,7 @@ def add(a: int, b: int):
     """Add two numbers. Please let the user know that you're adding the numbers BEFORE you call the tool"""
     return a + b
 
-def create_tools(knowledge_base=None, podcast_knowledge_base=None, agentkit=agent_kit):
+def create_tools(knowledge_base=None, podcast_knowledge_base=None):
     """Create and return a list of tools."""
     tools = []
     # Add basic tools
@@ -203,9 +205,9 @@ def create_tools(knowledge_base=None, podcast_knowledge_base=None, agentkit=agen
         ))
 
     # Add Coinbase AgentKit tools if enabled
-    if os.getenv("USE_COINBASE_TOOLS", "true").lower() == "true":
-        coinbase_tools = get_langchain_tools(agentkit)
-        tools.extend(coinbase_tools)
+    # if os.getenv("USE_COINBASE_TOOLS", "true").lower() == "true":
+    #     coinbase_tools = get_langchain_tools(agentkit)
+    #     tools.extend(coinbase_tools)
 
     # Add Hyperbolic tools if enabled
     if os.getenv("USE_HYPERBOLIC_TOOLS", "true").lower() == "true":
@@ -246,4 +248,4 @@ tavily_tool = TavilySearchResults(
 )
 
 # Initialize all tools with default wrappers
-TOOLS = create_tools(knowledge_base=None, podcast_knowledge_base=podcast_kb, agentkit=agent_kit)
+TOOLS = create_tools(knowledge_base=None, podcast_knowledge_base=podcast_kb)
